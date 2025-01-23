@@ -129,9 +129,9 @@ The LSTM model achieved satisfactory accuracy and performed well on both the tra
 ## Author
 
 This Movie Review Sentiment Analyzer was developed by :
--	[@katakampranav](https://github.com/katakampranav)
--	Repository : https://github.com/katakampranav/Movie-Review-Sentiment-Analyzer.git
+-	[@GubbalaSaiJithin](https://github.com/GubbalaSaiJithin)
+-	Repository : https://github.com/GubbalaSaiJithin/Movie-Review-Sentiment-Analyzer.git
 
 ## Feedback
 
-For any feedback or queries, please reach out to me at katakampranavshankar@gmail.com.
+For any feedback or queries, please reach out to me at saijithin09@gmail.com.
