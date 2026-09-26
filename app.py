@@ -1,110 +1,34 @@
+from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pandas as pd
 import streamlit as st
-import tensorflow as tf
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-import pickle
-from tensorflow.keras import backend as K
-from PIL import Image
-import base64
+from sentiment_model import load_bundle, predict_sentiment
 
-# Load model and tokenizer
-@st.cache_resource
-def load_model():
-    return tf.keras.models.load_model("sentiment_analysis_model.h5")
+st.set_page_config(page_title='Movie Review Sentiment Analyzer')
+st.title('Movie Review Sentiment Analyzer')
+st.write('Classify an English movie review as negative, positive or neutral.')
 
 @st.cache_resource
-def load_tokenizer():
-    with open('tokenizer.pkl', 'rb') as handle:
-        return pickle.load(handle)
+def get_bundle():
+    return load_bundle()
 
-model = load_model()
-tokenizer = load_tokenizer()
+try:
+    bundle = get_bundle()
+except (OSError, ValueError, ModuleNotFoundError) as error:
+    st.error(f'Could not load model assets: {error}')
+    st.stop()
 
-# Predict sentiment
-def predict_sentiment(review):
-    sequence = tokenizer.texts_to_sequences([review])
-    padded_sequence = pad_sequences(sequence, maxlen=200)
-    prediction = model.predict(padded_sequence)
-    sentiment = ['negative', 'positive', 'neutral'][prediction.argmax()]
-    K.clear_session()  # Free memory
-    return sentiment
+review = st.text_area('Enter the movie review', height=180, max_chars=20000)
+if st.button('Analyze'):
+    try:
+        result = predict_sentiment(review, bundle)
+        st.subheader(result['sentiment'].capitalize() + ' sentiment')
+        st.bar_chart(pd.DataFrame.from_dict(result['scores'], orient='index', columns=['Model score']))
+        st.caption('Model scores are not calibrated confidence estimates. Sarcasm and unfamiliar text can be misclassified.')
+    except ValueError as error:
+        st.error(str(error))
 
-# Load image
-def load_image(filepath: str):
-    return Image.open(filepath)
-
-# Set background image
-def set_background(image_file):
-    with open(image_file, "rb") as img_file:
-        img_data = base64.b64encode(img_file.read()).decode()
-    st.markdown(
-        f"""
-        <style>
-        .stApp {{
-            background-image: url("data:image/jpg;base64,{img_data}");
-            background-size: cover;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-# Set background
-set_background("assets/Images/bg_image.jpg")
-
-# Streamlit app layout
-st.title("Movie Review Sentiment Analyzer")
-st.markdown("<h2>Analyze the sentiment of movie reviews and get a final recommendation!</h2>", unsafe_allow_html=True)
-
-user_review = st.text_area("Enter the movie review:", height=200)
-
-# Load 3D images and dialogues for sentiment
-images = {
-    'positive': {
-        'image': load_image("assets/3D animated images/positive_review.png")
-    },
-    'neutral': {
-        'image': load_image("assets/3D animated images/neutral_review.png")
-    },
-    'negative': {
-        'image': load_image("assets/3D animated images/negative_review.png")
-    }
-}
-
-# CSS to center elements
-def center_content():
-    st.markdown(
-        """
-        <style>
-        .center {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .image {
-            width: 300px;
-        }
-        .dialogue {
-            margin-top: 10px;
-            width: 200px;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-# Inject CSS for centering
-center_content()
-
-# Analyze button action
-if st.button("ANALYZE"):
-    if user_review:
-        sentiment = predict_sentiment(user_review)
-
-        st.markdown('<div class="center">', unsafe_allow_html=True)
-        st.markdown(f"<h1 style='text-align: center'>{sentiment.capitalize()} Sentiment</h1>", unsafe_allow_html=True)
-        st.image(images[sentiment]['image'], use_column_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    else:
-        st.error("Please enter a review before analyzing.")
+with st.expander('Model information'):
+    st.write(bundle['source'])
+    st.write('The original model can run without the training CSV. A fresh accuracy evaluation requires the real dataset; the repository CSV is a Git LFS pointer.')
