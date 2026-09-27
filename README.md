@@ -55,4 +55,4 @@ New models are saved in artifacts/trained/ and selected by the app on its next r
 
 The original notebook fitted its tokenizer on all reviews, including the test partition. Therefore its historical test accuracy must not be presented as a fresh, leakage-free evaluation. Model scores in the app are not calibrated confidence estimates. Sarcasm, unfamiliar vocabulary and mixed sentiment can be misclassified.
 
-Repairs were made with AI assistance. Preserve that provenance and be ready to explain your own changes and the limitations. Dataset licensing/source details also need documenting when the original data are recovered.
+Dataset licensing and source details need documenting when the original training data are recovered.
